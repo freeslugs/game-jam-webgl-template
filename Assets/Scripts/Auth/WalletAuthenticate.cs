@@ -1,8 +1,28 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using TMPro;
 using UnityEngine.SceneManagement;
 using Near;
 using UnityEngine.UI;
+
+[Serializable]
+public class RandomNumberResponse
+{
+    public RandomNumberResponseData data;
+}
+
+[Serializable]
+public class RandomNumberResponseData
+{
+    public bool success;
+    public string requestId;
+    public string transactionHash;
+    public string url;
+    public string[] randomNumber;
+}
 
 public class WalletAuthenticate : MonoBehaviour
 {
@@ -15,6 +35,8 @@ public class WalletAuthenticate : MonoBehaviour
     [SerializeField] private TMP_InputField inputArgs;
     [SerializeField] private Toggle toggleChange;
     [SerializeField] private TextMeshProUGUI txtContract;
+
+    private UnityWebRequest request;
 
     /// <summary>
     /// Once authenticated with the Near wallet, the user is redirected back here.
@@ -135,6 +157,50 @@ public class WalletAuthenticate : MonoBehaviour
             Near_API.Logout(PlayerPrefs.GetString("networkId"));
         }
         LoginStatus();
+    }
+
+    public void CallVRF()
+    {
+        StartCoroutine(RequestRandomNumber());
+    }
+
+
+    private IEnumerator RequestRandomNumber()
+    {
+        ChangeText("Requesting random number from VRF.");
+
+        string url = "https://staging.0xcord.com/api/vrfv2/requestRandomNumber?network=fuji&numWords=1";
+        string authToken = "xxxx";
+
+        UnityWebRequest request = UnityWebRequest.Post(url, "");
+        
+        request.SetRequestHeader("Authorization", authToken);
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            string json = request.downloadHandler.text;
+            RandomNumberResponse response = JsonUtility.FromJson<RandomNumberResponse>(json);
+
+            if (response != null && response.data != null && response.data.randomNumber != null && response.data.randomNumber.Length > 0)
+            {
+                string randomNumber = response.data.randomNumber[0];
+                ChangeText("Random number: " + randomNumber);
+
+                Debug.Log("requestId: " + response.data.requestId);
+                Debug.Log("transactionHash: " + response.data.transactionHash);
+                Debug.Log("url: " + response.data.url);
+                Debug.Log("randomNumber: " + randomNumber);
+            }
+            else
+            {
+                Debug.Log("Failed to parse response");
+            }
+        }
+        else
+        {
+            Debug.Log("Error: " + request.error);
+        }        
     }
 
     //Ask Near for the login status

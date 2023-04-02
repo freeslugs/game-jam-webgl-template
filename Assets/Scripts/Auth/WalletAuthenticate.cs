@@ -169,7 +169,7 @@ public class WalletAuthenticate : MonoBehaviour
     {
         ChangeText("Requesting random number from VRF.");
 
-        string url = "https://staging.0xcord.com/api/vrfv2/requestRandomNumber?network=fuji&numWords=1";
+        string url = "https://0xcord.com/api/vrfv2/requestRandomNumber?network=fuji&numWords=1";
         string authToken = "xxxx";
 
         UnityWebRequest request = UnityWebRequest.Post(url, "");
